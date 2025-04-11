@@ -1,4 +1,5 @@
 const User = require("../models/auth-user")
+const bcrypt = require('bcryptjs')
 
 const home = async (req, res) => {
     try{
@@ -34,6 +35,25 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     try{
+
+        const { email, password } = req.body; 
+
+        const emailExists = await User.findOne({ email:email })
+
+        if(!emailExists){
+            return res.status(400).json({error: 'Invalid Credentials !!'})
+        }
+
+
+        const validUser = await bcrypt.compare(password, emailExists.password)
+
+        if(validUser){
+            return res.status(200).json({message: 'Login Successfull', token: await emailExists.generateAuthToken(), userId: emailExists._id.toString()})
+        }else{
+            return res.status(400).json({error: 'Invalid Credentials !!'})
+        }
+
+
         res.status(200).json({message: 'Welcome to the login page !!!'})
     }catch(error){
         console.log(error)
